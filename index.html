@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Basketball Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .stat-card {
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 to-blue-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-2xl shadow-xl p-8 mb-8 text-white">
+            <h1 class="text-4xl font-bold mb-2">🏀 Team Manager</h1>
+            <p class="text-orange-100">Track your team's games, stats, and roster</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-6 overflow-hidden">
+            <div class="flex border-b">
+                <button onclick="switchTab('roster')" id="tab-roster" class="flex-1 px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 border-b-2 border-orange-600 text-orange-600">
+                    👥 Roster
+                </button>
+                <button onclick="switchTab('games')" id="tab-games" class="flex-1 px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 border-b-2 border-transparent">
+                    🏆 Games
+                </button>
+                <button onclick="switchTab('stats')" id="tab-stats" class="flex-1 px-6 py-4 font-semibold text-gray-600 hover:bg-gray-50 border-b-2 border-transparent">
+                    📊 Stats
+                </button>
+            </div>
+        </div>
+
+        <!-- Roster Tab -->
+        <div id="content-roster" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Add Player</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="playerName" placeholder="Player Name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                    <input type="text" id="playerNumber" placeholder="Jersey #" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                    <input type="text" id="playerContact" placeholder="Parent Contact (optional)" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                </div>
+                <button onclick="addPlayer()" class="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg transition">
+                    + Add Player
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Team Roster</h2>
+                <div id="playerList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Games Tab -->
+        <div id="content-games" class="tab-content hidden">
+            <!-- Start New Game -->
+            <div id="gameSetup" class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Start New Game</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="opponent" placeholder="Opponent Team" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                    <input type="date" id="gameDate" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                </div>
+                <button onclick="startLiveGame()" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg transition">
+                    🏀 Start Live Tracking
+                </button>
+            </div>
+
+            <!-- Live Game Tracker -->
+            <div id="liveGameTracker" class="hidden">
+                <!-- Scoreboard -->
+                <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl shadow-lg p-6 mb-6 text-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Live Game vs <span id="liveOpponent"></span></h2>
+                        <button onclick="endLiveGame()" class="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold hover:bg-orange-50 transition">
+                            End Game
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Our Score</div>
+                            <div id="liveOurScore" class="text-5xl font-bold">0</div>
+                        </div>
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Their Score</div>
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="adjustOpponentScore(-1)" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-10 h-10 rounded-lg text-2xl font-bold">-</button>
+                                <div id="liveTheirScore" class="text-5xl font-bold">0</div>
+                                <button onclick="adjustOpponentScore(1)" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-10 h-10 rounded-lg text-2xl font-bold">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Stats Entry -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Track Player Stats</h3>
+                    <div id="livePlayerStats" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Game History</h2>
+                <div id="gamesList" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="content-stats" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Team Overview</h2>
+                <div id="teamStats" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Player Statistics</h2>
+                <div id="playerStats" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let players = [];
+        let games = [];
+        let liveGame = null;
+
+        // Load data from storage
+        function loadData() {
+            const savedPlayers = window.storage ? null : localStorage.getItem('players');
+            const savedGames = window.storage ? null : localStorage.getItem('games');
+            
+            if (savedPlayers) players = JSON.parse(savedPlayers);
+            if (savedGames) games = JSON.parse(savedGames);
+            
+            // Load from persistent storage if available
+            if (window.storage) {
+                loadFromPersistentStorage();
+            }
+        }
+
+        async function loadFromPersistentStorage() {
+            try {
+                const playersResult = await window.storage.get('players');
+                const gamesResult = await window.storage.get('games');
+                
+                if (playersResult && playersResult.value) {
+                    players = JSON.parse(playersResult.value);
+                }
+                if (gamesResult && gamesResult.value) {
+                    games = JSON.parse(gamesResult.value);
+                }
+                
+                renderAll();
+            } catch (error) {
+                console.log('Loading from local storage instead');
+                renderAll();
+            }
+        }
+
+        // Save data
+        async function saveData() {
+            if (window.storage) {
+                try {
+                    await window.storage.set('players', JSON.stringify(players));
+                    await window.storage.set('games', JSON.stringify(games));
+                } catch (error) {
+                    console.error('Storage error:', error);
+                    localStorage.setItem('players', JSON.stringify(players));
+                    localStorage.setItem('games', JSON.stringify(games));
+                }
+            } else {
+                localStorage.setItem('players', JSON.stringify(players));
+                localStorage.setItem('games', JSON.stringify(games));
+            }
+        }
+
+        // Live game functions
+        function startLiveGame() {
+            const opponent = document.getElementById('opponent').value.trim();
+            const date = document.getElementById('gameDate').value;
+            
+            if (!opponent || !date) {
+                alert('Please enter opponent and date');
+                return;
+            }
+            
+            if (players.length === 0) {
+                alert('Please add players to the roster first');
+                return;
+            }
+            
+            liveGame = {
+                opponent,
+                date,
+                ourScore: 0,
+                theirScore: 0,
+                playerStats: {}
+            };
+            
+            // Initialize stats for all players
+            players.forEach(p => {
+                liveGame.playerStats[p.id] = {
+                    twoPointers: 0,
+                    threePointers: 0,
+                    freeThrows: 0,
+                    rebounds: 0,
+                    assists: 0,
+                    steals: 0,
+                    blocks: 0
+                };
+            });
+            
+            document.getElementById('gameSetup').classList.add('hidden');
+            document.getElementById('liveGameTracker').classList.remove('hidden');
+            document.getElementById('liveOpponent').textContent = opponent;
+            
+            renderLiveGame();
+        }
+
+        function renderLiveGame() {
+            const container = document.getElementById('livePlayerStats');
+            
+            container.innerHTML = players.map(p => {
+                const stats = liveGame.playerStats[p.id];
+                const totalPoints = (stats.twoPointers * 2) + (stats.threePointers * 3) + stats.freeThrows;
+                
+                return `
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                                    ${p.number}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-lg text-gray-800">${p.name}</div>
+                                    <div class="text-sm font-semibold text-orange-600">${totalPoints} points</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scoring Buttons -->
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            <button onclick="addStat(${p.id}, 'twoPointers')" class="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition active:scale-95">
+                                2PT
+                                <div class="text-xs mt-1">${stats.twoPointers}</div>
+                            </button>
+                            <button onclick="addStat(${p.id}, 'threePointers')" class="bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition active:scale-95">
+                                3PT
+                                <div class="text-xs mt-1">${stats.threePointers}</div>
+                            </button>
+                            <button onclick="addStat(${p.id}, 'freeThrows')" class="bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition active:scale-95">
+                                FT
+                                <div class="text-xs mt-1">${stats.freeThrows}</div>
+                            </button>
+                        </div>
+                        
+                        <!-- Other Stats Buttons -->
+                        <div class="grid grid-cols-4 gap-2">
+                            <button onclick="addStat(${p.id}, 'rebounds')" class="bg-orange-400 hover:bg-orange-500 text-white py-2 px-1 rounded-lg text-sm font-semibold transition active:scale-95">
+                                REB
+                                <div class="text-xs mt-1">${stats.rebounds}</div>
+                            </button>
+                            <button onclick="addStat(${p.id}, 'assists')" class="bg-teal-400 hover:bg-teal-500 text-white py-2 px-1 rounded-lg text-sm font-semibold transition active:scale-95">
+                                AST
+                                <div class="text-xs mt-1">${stats.assists}</div>
+                            </button>
+                            <button onclick="addStat(${p.id}, 'steals')" class="bg-red-400 hover:bg-red-500 text-white py-2 px-1 rounded-lg text-sm font-semibold transition active:scale-95">
+                                STL
+                                <div class="text-xs mt-1">${stats.steals}</div>
+                            </button>
+                            <button onclick="addStat(${p.id}, 'blocks')" class="bg-indigo-400 hover:bg-indigo-500 text-white py-2 px-1 rounded-lg text-sm font-semibold transition active:scale-95">
+                                BLK
+                                <div class="text-xs mt-1">${stats.blocks}</div>
+                            </button>
+                        </div>
+                        
+                        <!-- Undo Button -->
+                        <button onclick="showUndoMenu(${p.id})" class="mt-2 w-full text-sm text-gray-600 hover:text-gray-800 font-semibold py-1">
+                            Undo ↶
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            updateLiveScore();
+        }
+
+        function addStat(playerId, statType) {
+            liveGame.playerStats[playerId][statType]++;
+            renderLiveGame();
+        }
+
+        function showUndoMenu(playerId) {
+            const stats = liveGame.playerStats[playerId];
+            const player = players.find(p => p.id === playerId);
+            
+            const options = [
+                { label: '2PT', key: 'twoPointers', count: stats.twoPointers },
+                { label: '3PT', key: 'threePointers', count: stats.threePointers },
+                { label: 'FT', key: 'freeThrows', count: stats.freeThrows },
+                { label: 'REB', key: 'rebounds', count: stats.rebounds },
+                { label: 'AST', key: 'assists', count: stats.assists },
+                { label: 'STL', key: 'steals', count: stats.steals },
+                { label: 'BLK', key: 'blocks', count: stats.blocks }
+            ].filter(opt => opt.count > 0);
+            
+            if (options.length === 0) {
+                alert('No stats to undo for this player');
+                return;
+            }
+            
+            const choice = prompt(
+                `Undo stat for ${player.name}:\n` + 
+                options.map((opt, i) => `${i + 1}. ${opt.label} (${opt.count})`).join('\n') +
+                `\n\nEnter number 1-${options.length}:`
+            );
+            
+            const index = parseInt(choice) - 1;
+            if (index >= 0 && index < options.length) {
+                liveGame.playerStats[playerId][options[index].key]--;
+                renderLiveGame();
+            }
+        }
+
+        function updateLiveScore() {
+            let totalPoints = 0;
+            Object.values(liveGame.playerStats).forEach(stats => {
+                totalPoints += (stats.twoPointers * 2) + (stats.threePointers * 3) + stats.freeThrows;
+            });
+            
+            liveGame.ourScore = totalPoints;
+            document.getElementById('liveOurScore').textContent = totalPoints;
+            document.getElementById('liveTheirScore').textContent = liveGame.theirScore;
+        }
+
+        function adjustOpponentScore(change) {
+            liveGame.theirScore = Math.max(0, liveGame.theirScore + change);
+            updateLiveScore();
+        }
+
+        function endLiveGame() {
+            if (!confirm('End game and save stats?')) return;
+            
+            // Calculate final stats and update player totals
+            const playerStats = {};
+            
+            players.forEach(p => {
+                const stats = liveGame.playerStats[p.id];
+                const points = (stats.twoPointers * 2) + (stats.threePointers * 3) + stats.freeThrows;
+                
+                playerStats[p.id] = {
+                    points,
+                    twoPointers: stats.twoPointers,
+                    threePointers: stats.threePointers,
+                    freeThrows: stats.freeThrows,
+                    rebounds: stats.rebounds,
+                    assists: stats.assists,
+                    steals: stats.steals,
+                    blocks: stats.blocks
+                };
+                
+                // Update cumulative stats
+                const player = players.find(pl => pl.id === p.id);
+                if (!player.stats.twoPointers) player.stats.twoPointers = 0;
+                if (!player.stats.threePointers) player.stats.threePointers = 0;
+                if (!player.stats.freeThrows) player.stats.freeThrows = 0;
+                if (!player.stats.steals) player.stats.steals = 0;
+                if (!player.stats.blocks) player.stats.blocks = 0;
+                
+                player.stats.points += points;
+                player.stats.twoPointers += stats.twoPointers;
+                player.stats.threePointers += stats.threePointers;
+                player.stats.freeThrows += stats.freeThrows;
+                player.stats.rebounds += stats.rebounds;
+                player.stats.assists += stats.assists;
+                player.stats.steals += stats.steals;
+                player.stats.blocks += stats.blocks;
+                player.stats.gamesPlayed += 1;
+            });
+            
+            games.push({
+                id: Date.now(),
+                opponent: liveGame.opponent,
+                date: liveGame.date,
+                ourScore: liveGame.ourScore,
+                theirScore: liveGame.theirScore,
+                result: liveGame.ourScore > liveGame.theirScore ? 'W' : liveGame.ourScore < liveGame.theirScore ? 'L' : 'T',
+                playerStats
+            });
+            
+            liveGame = null;
+            document.getElementById('gameSetup').classList.remove('hidden');
+            document.getElementById('liveGameTracker').classList.add('hidden');
+            document.getElementById('opponent').value = '';
+            
+            saveData();
+            renderGames();
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.remove('border-orange-600', 'text-orange-600');
+                el.classList.add('border-transparent', 'text-gray-600');
+            });
+            
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('border-orange-600', 'text-orange-600');
+            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-gray-600');
+            
+            if (tab === 'stats') renderStats();
+        }
+
+        // Add player
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const number = document.getElementById('playerNumber').value.trim();
+            const contact = document.getElementById('playerContact').value.trim();
+            
+            if (!name || !number) {
+                alert('Please enter player name and number');
+                return;
+            }
+            
+            players.push({
+                id: Date.now(),
+                name,
+                number,
+                contact,
+                stats: { points: 0, rebounds: 0, assists: 0, gamesPlayed: 0, twoPointers: 0, threePointers: 0, freeThrows: 0, steals: 0, blocks: 0 }
+            });
+            
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerNumber').value = '';
+            document.getElementById('playerContact').value = '';
+            
+            saveData();
+            renderPlayers();
+        }
+
+        // Remove player
+        function removePlayer(id) {
+            if (confirm('Remove this player?')) {
+                players = players.filter(p => p.id !== id);
+                saveData();
+                renderPlayers();
+            }
+        }
+
+        // Render players
+        function renderPlayers() {
+            const list = document.getElementById('playerList');
+            if (players.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center py-8">No players added yet</p>';
+                return;
+            }
+            
+            list.innerHTML = players.map(p => `
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                            ${p.number}
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-800">${p.name}</div>
+                            ${p.contact ? `<div class="text-sm text-gray-500">${p.contact}</div>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="removePlayer(${p.id})" class="text-red-500 hover:text-red-700 font-semibold">
+                        Remove
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Remove game
+        function removeGame(id) {
+            if (confirm('Delete this game?')) {
+                games = games.filter(g => g.id !== id);
+                saveData();
+                renderGames();
+            }
+        }
+
+        // Render games
+        function renderGames() {
+            const list = document.getElementById('gamesList');
+            if (games.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center py-8">No games recorded yet</p>';
+                return;
+            }
+            
+            const sortedGames = [...games].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            list.innerHTML = sortedGames.map(g => `
+                <div class="p-4 border-l-4 ${g.result === 'W' ? 'border-green-500 bg-green-50' : g.result === 'L' ? 'border-red-500 bg-red-50' : 'border-gray-500 bg-gray-50'} rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="font-bold text-lg text-gray-800">vs ${g.opponent}</div>
+                            <div class="text-sm text-gray-600">${new Date(g.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold ${g.result === 'W' ? 'text-green-600' : g.result === 'L' ? 'text-red-600' : 'text-gray-600'}">
+                                ${g.ourScore} - ${g.theirScore}
+                            </div>
+                            <div class="text-sm font-semibold ${g.result === 'W' ? 'text-green-600' : g.result === 'L' ? 'text-red-600' : 'text-gray-600'}">
+                                ${g.result === 'W' ? 'WIN' : g.result === 'L' ? 'LOSS' : 'TIE'}
+                            </div>
+                        </div>
+                    </div>
+                    ${Object.keys(g.playerStats).length > 0 ? `
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <div class="text-xs font-semibold text-gray-600 mb-2">PLAYER STATS</div>
+                            <div class="space-y-2">
+                                ${Object.entries(g.playerStats).map(([playerId, stats]) => {
+                                    const player = players.find(p => p.id === parseInt(playerId));
+                                    if (!player) return '';
+                                    return `
+                                        <div class="text-sm bg-white bg-opacity-50 p-2 rounded">
+                                            <div class="font-semibold text-gray-800 mb-1">#${player.number} ${player.name} - ${stats.points} pts</div>
+                                            <div class="text-xs text-gray-600 grid grid-cols-2 gap-x-3">
+                                                ${stats.twoPointers ? `<span>2PT: ${stats.twoPointers}</span>` : ''}
+                                                ${stats.threePointers ? `<span>3PT: ${stats.threePointers}</span>` : ''}
+                                                ${stats.freeThrows ? `<span>FT: ${stats.freeThrows}</span>` : ''}
+                                                ${stats.rebounds ? `<span>REB: ${stats.rebounds}</span>` : ''}
+                                                ${stats.assists ? `<span>AST: ${stats.assists}</span>` : ''}
+                                                ${stats.steals ? `<span>STL: ${stats.steals}</span>` : ''}
+                                                ${stats.blocks ? `<span>BLK: ${stats.blocks}</span>` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    <button onclick="removeGame(${g.id})" class="mt-3 text-xs text-red-500 hover:text-red-700">
+                        Delete Game
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Render statistics
+        function renderStats() {
+            // Team stats
+            const wins = games.filter(g => g.result === 'W').length;
+            const losses = games.filter(g => g.result === 'L').length;
+            const totalPoints = games.reduce((sum, g) => sum + g.ourScore, 0);
+            const avgPoints = games.length > 0 ? (totalPoints / games.length).toFixed(1) : 0;
+            
+            document.getElementById('teamStats').innerHTML = `
+                <div class="stat-card bg-green-100 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-green-700">${wins}</div>
+                    <div class="text-sm text-green-600 font-semibold">Wins</div>
+                </div>
+                <div class="stat-card bg-red-100 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-red-700">${losses}</div>
+                    <div class="text-sm text-red-600 font-semibold">Losses</div>
+                </div>
+                <div class="stat-card bg-blue-100 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-blue-700">${games.length}</div>
+                    <div class="text-sm text-blue-600 font-semibold">Total Games</div>
+                </div>
+                <div class="stat-card bg-orange-100 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-orange-700">${avgPoints}</div>
+                    <div class="text-sm text-orange-600 font-semibold">Avg Points</div>
+                </div>
+            `;
+            
+            // Player stats
+            const playerStatsList = document.getElementById('playerStats');
+            if (players.length === 0) {
+                playerStatsList.innerHTML = '<p class="text-gray-500 text-center py-8">No players added yet</p>';
+                return;
+            }
+            
+            const sortedPlayers = [...players].sort((a, b) => b.stats.points - a.stats.points);
+            
+            playerStatsList.innerHTML = sortedPlayers.map(p => {
+                const s = p.stats;
+                const gp = s.gamesPlayed || 0;
+                
+                return `
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">
+                                ${p.number}
+                            </div>
+                            <div class="font-bold text-gray-800">${p.name}</div>
+                        </div>
+                        <div class="text-sm text-gray-600">${gp} games</div>
+                    </div>
+                    
+                    <!-- Main Stats -->
+                    <div class="grid grid-cols-3 gap-4 text-center mb-3 pb-3 border-b border-gray-200">
+                        <div>
+                            <div class="text-2xl font-bold text-orange-600">${s.points || 0}</div>
+                            <div class="text-xs text-gray-600">Total Points</div>
+                            ${gp > 0 ? `<div class="text-xs text-gray-500">${(s.points / gp).toFixed(1)} PPG</div>` : ''}
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-blue-600">${s.rebounds || 0}</div>
+                            <div class="text-xs text-gray-600">Rebounds</div>
+                            ${gp > 0 ? `<div class="text-xs text-gray-500">${(s.rebounds / gp).toFixed(1)} RPG</div>` : ''}
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-green-600">${s.assists || 0}</div>
+                            <div class="text-xs text-gray-600">Assists</div>
+                            ${gp > 0 ? `<div class="text-xs text-gray-500">${(s.assists / gp).toFixed(1)} APG</div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-sm">
+                        <div class="bg-white p-2 rounded">
+                            <div class="font-bold text-purple-600">${s.twoPointers || 0}</div>
+                            <div class="text-xs text-gray-600">2-Pointers</div>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <div class="font-bold text-indigo-600">${s.threePointers || 0}</div>
+                            <div class="text-xs text-gray-600">3-Pointers</div>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <div class="font-bold text-green-600">${s.freeThrows || 0}</div>
+                            <div class="text-xs text-gray-600">Free Throws</div>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <div class="font-bold text-red-600">${s.steals || 0}</div>
+                            <div class="text-xs text-gray-600">Steals</div>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <div class="font-bold text-gray-700">${s.blocks || 0}</div>
+                            <div class="text-xs text-gray-600">Blocks</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        // Render all
+        function renderAll() {
+            renderPlayers();
+            renderGames();
+            renderStats();
+        }
+
+        // Initialize
+        loadData();
+        renderAll();
+        
+        // Set default date to today
+        document.getElementById('gameDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
